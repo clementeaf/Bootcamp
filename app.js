@@ -1,81 +1,78 @@
-let colors = ['rgb(0, 0, 255)','rgb(255, 255, 0)','rgb(0, 128, 0)','rgb(255, 0, 0)','rgb(255, 255, 255)','rgb(255, 165, 0)',]
+const taskInput = document.querySelector('.task-input input');
+const taskBox = document.querySelector('.task-box')
 
-let cuadrados = document.querySelectorAll('.square')
-let colorDisp = document.getElementById('colorDisplay')
-let message = document.getElementById('message')
-let title = document.getElementById('title')
+let editId;
+let isEditedTask = false;
+//getting localStorage todo-list
+let todos = JSON.parse(localStorage.getItem("todo-list"));
 
-const random = Math.floor(Math.random() * colors.length);
-let pickedColor = colors[random];
-
-function reload() {
-    window.location.reload();
-}
-
-const shuffledArray = colors.sort((a, b) => 0.5 - Math.random());
-for(i=0;i <= shuffledArray.length;i++){
-    if(i === 6){
-        break
+function showTodo(){
+    let li = "";
+    if(todos) {
+        todos.forEach((todo, id) => {
+            // if todo status is completed, set the isCompelted value to checked
+            let isCompleted = todo.status == "completed" ? "checked" : "";
+            li += `<li class="task">
+                        <label for="${id}">
+                            <input onClick="updateStatus(this)" type="checkbox" id="${id}" ${isCompleted}>
+                            <p class="${isCompleted}">${todo.name}</p>
+                        </label>
+                        <div class="icons">             
+                            <button onclick="edit(${id}, '${todo.name}')">edit</button>              
+                            <button onclick="trash(${id})">trash</button>              
+                        </div>
+                    </li>`;
+        });
     }
-    console.log(shuffledArray[i])
-    cuadrados.forEach(el => {
-        el.style.background = shuffledArray[i++]
-    });
+    taskBox.innerHTML = li;
 }
-    cuadrados.forEach(el => {
-        el.style.background = shuffledArray
-    });
+
+showTodo();
+
+function edit(taskId, taskName) {
+    editId = taskId;
+    isEditedTask = true;
+    taskInput.value = taskName;
+}
+
+function trash(deletedId) {
+    //removing selected task from array/todos
+    todos.splice(deletedId, 1);
+    localStorage.setItem("todo-list", JSON.stringify(todos));
+    showTodo();
+}
 
 
-
-
-function randomIntFromInterval(min, max) { // min and max included 
-    return Math.floor(Math.random() * (max - min + 1) + min)
-  }
-  
-
-
-
-function clickedColor(elem){
-    if(elem.style.background != pickedColor){
-        alert('Intentalo nuevamente')
-        elem.style.background = '#232323'
+function updateStatus(selectedTask) {
+    //getting paragraph that contains task name
+    let taskName = selectedTask.parentElement.lastElementChild;
+    if(selectedTask.checked){
+        taskName.classList.add("checked");
+        // updating the status of selected task to completed
+        todos[selectedTask.id].status = "completed";
     } else {
-        title.style.color = elem.style.background
-        cuadrados.forEach(el => {
-            el.style.background = elem.style.background
-            message.innerHTML = '¡Correcto!'
-        });
+        // updating the status of selected task to pending
+        taskName.classList.remove("checked");
+        todos[selectedTask.id].status = "pending";
     }
+    localStorage.setItem("todo-list", JSON.stringify(todos));
 }
 
- 
-colorDisp.innerHTML = " " + pickedColor + " "
-
-function easy(){
-    for(i=0;i <= colors.length;i++){
-        if(i === 3){
-            cuadrados.forEach(el => {
-                el.style.background = colors[i++]
-            });
-            break
+taskInput.addEventListener('keyup', e => {
+    let userTask = taskInput.value.trim();
+    if(e.key == 'Enter' && userTask) {
+        if(!isEditedTask) { // if isEditedTask isnt true
+            if(!todos) { // if todos isnt exist, pass an empty array to todos
+                todos = [];
+            }
+            let taskInfo = {name: userTask, status: 'pending'};
+            todos.push(taskInfo); //adding new task to todos
+        } else {
+            isEditedTask = false;
+            todos[editId].name = userTask;
         }
-        cuadrados.forEach(el => {
-            el.style.background = '#232323'
-        });
-
+        taskInput.value= "";
+        localStorage.setItem('todo-list', JSON.stringify(todos));
+        showTodo();
     }
-
-}
-
-function hard(){
-    for(i=0;i <= colors.length;i++){
-        if(i === 6){
-            break
-        }
-        console.log(colors[i])
-        cuadrados.forEach(el => {
-            el.style.background = colors[i++]
-        });
-    }
-}
+})
